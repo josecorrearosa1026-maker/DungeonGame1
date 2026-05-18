@@ -1,229 +1,229 @@
 #include <optional>
 #include <SFML/Graphics.hpp>
 
+const int FILAS = 15;
+const int COLUMNAS = 20;
+const int TAM = 40;
+const int NUM_HABITACIONES = 6;
+
+bool hayPared(const int mapas[NUM_HABITACIONES][FILAS][COLUMNAS], int habitacion, float x, float y)
+{
+    int columna = static_cast<int>(x) / TAM;
+    int fila = static_cast<int>(y) / TAM;
+
+    if (fila < 0 || fila >= FILAS || columna < 0 || columna >= COLUMNAS)
+    {
+        return true;
+    }
+
+    return mapas[habitacion][fila][columna] == 1;
+}
+
+bool puedeMoverse(const int mapas[NUM_HABITACIONES][FILAS][COLUMNAS], int habitacion, sf::Vector2f pos)
+{
+    return !hayPared(mapas, habitacion, pos.x, pos.y) &&
+           !hayPared(mapas, habitacion, pos.x + 39, pos.y) &&
+           !hayPared(mapas, habitacion, pos.x, pos.y + 39) &&
+           !hayPared(mapas, habitacion, pos.x + 39, pos.y + 39);
+}
+
+void revisarCambioHabitacion(sf::RectangleShape& jugador, int& habitacionActual)
+{
+    sf::Vector2f pos = jugador.getPosition();
+    int columnaCentro = static_cast<int>(pos.x + 20) / TAM;
+    int filaCentro = static_cast<int>(pos.y + 20) / TAM;
+
+    if (columnaCentro >= 19 && habitacionActual < NUM_HABITACIONES - 1)
+    {
+        habitacionActual++;
+        jugador.setPosition(sf::Vector2f(40.f, filaCentro * 40.f));
+    }
+
+    if (columnaCentro <= 0 && habitacionActual > 0)
+    {
+        habitacionActual--;
+        jugador.setPosition(sf::Vector2f(720.f, filaCentro * 40.f));
+    }
+}
+
 int main()
 {
     sf::RenderWindow window(sf::VideoMode({800, 600}), "Dungeon Game");
-    sf::RectangleShape jugador({40, 40});
-    jugador.setFillColor(sf::Color::Green);
-    jugador.setPosition({100, 100});
 
-    sf::RectangleShape pared({40, 40});
+    sf::RectangleShape jugador(sf::Vector2f(40.f, 40.f));
+    jugador.setFillColor(sf::Color::Green);
+    jugador.setPosition(sf::Vector2f(100.f, 100.f));
+
+    sf::RectangleShape pared(sf::Vector2f(40.f, 40.f));
     pared.setFillColor(sf::Color::Blue);
 
-    static const int mapas[6][15][20] =
+    sf::RectangleShape salida(sf::Vector2f(40.f, 40.f));
+    salida.setFillColor(sf::Color::Yellow);
+
+    static const int mapas[NUM_HABITACIONES][FILAS][COLUMNAS] =
     {
-        // Habitacion 0 (door to the right at row 7)
         {
             {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
             {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
             {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+            {1,0,0,0,1,1,1,0,0,0,0,0,1,1,1,0,0,0,0,1},
+            {1,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1},
+            {1,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1},
             {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2},
             {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, // right door (col 19) open
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+            {1,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1},
+            {1,0,0,0,1,1,1,0,0,0,0,0,1,1,1,0,0,0,0,1},
             {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
             {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
             {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
             {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
         },
-        // Habitacion 1 (doors left and right at row 7)
         {
             {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
             {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+            {1,0,1,1,1,0,0,0,0,0,0,0,0,0,1,1,1,0,0,1},
+            {1,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1},
+            {1,0,0,0,1,0,0,0,1,1,1,1,0,0,1,0,0,0,0,1},
             {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
             {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+            {2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2},
             {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, // both sides open
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+            {1,0,0,0,1,0,0,0,1,1,1,1,0,0,1,0,0,0,0,1},
+            {1,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1},
+            {1,0,1,1,1,0,0,0,0,0,0,0,0,0,1,1,1,0,0,1},
             {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
             {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
             {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
         },
-        // Habitacion 2 (doors left and right at row 7)
         {
             {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
             {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+            {1,0,0,0,0,0,1,1,1,1,1,1,1,0,0,0,0,0,0,1},
+            {1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,1},
+            {1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,1},
+            {1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,1},
             {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+            {2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2},
             {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+            {1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,1},
+            {1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,1},
+            {1,0,0,0,0,0,1,1,1,1,1,1,1,0,0,0,0,0,0,1},
             {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
             {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
             {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
         },
-        // Habitacion 3 (doors left and right at row 7)
+        {
+            {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+            {1,0,1,1,1,1,0,0,0,0,0,0,0,1,1,1,1,0,0,1},
+            {1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1},
+            {1,0,1,0,0,0,0,0,1,1,1,1,0,0,0,0,1,0,0,1},
+            {1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1},
+            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+            {2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2},
+            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+            {1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1},
+            {1,0,1,0,0,0,0,0,1,1,1,1,0,0,0,0,1,0,0,1},
+            {1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1},
+            {1,0,1,1,1,1,0,0,0,0,0,0,0,1,1,1,1,0,0,1},
+            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+            {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
+        },
         {
             {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
             {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
             {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+            {1,0,1,1,1,0,0,0,0,0,0,0,0,0,1,1,1,0,0,1},
+            {1,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1},
+            {1,0,0,0,1,0,0,0,1,1,1,1,0,0,1,0,0,0,0,1},
             {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+            {2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2},
             {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+            {1,0,0,0,1,0,0,0,1,1,1,1,0,0,1,0,0,0,0,1},
+            {1,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1},
+            {1,0,1,1,1,0,0,0,0,0,0,0,0,0,1,1,1,0,0,1},
             {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
             {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
             {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
         },
-        // Habitacion 4 (doors left and right at row 7)
         {
             {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
             {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
             {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+            {1,0,0,0,1,1,1,0,0,0,0,0,1,1,1,0,0,0,0,1},
+            {1,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1},
+            {1,0,0,0,1,0,0,0,1,1,1,1,0,0,1,0,0,0,0,1},
             {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+            {2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
             {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
-        },
-        // Habitacion 5 (door to the left at row 7)
-        {
-            {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, // left door open
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+            {1,0,0,0,1,0,0,0,1,1,1,1,0,0,1,0,0,0,0,1},
+            {1,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1},
+            {1,0,0,0,1,1,1,0,0,0,0,0,1,1,1,0,0,0,0,1},
             {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
             {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
             {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
         }
     };
+
     int habitacionActual = 0;
+    float velocidad = 0.2f;
 
     while (window.isOpen())
     {
-        while (const std::optional<sf::Event> event = window.pollEvent())
+        while (const std::optional<sf::Event> evento = window.pollEvent())
         {
-            if (event->is<sf::Event::Closed>())
+            if (evento->is<sf::Event::Closed>())
             {
                 window.close();
             }
         }
 
-        float velocidad = 0.2f;
         sf::Vector2f posicion = jugador.getPosition();
-
-        auto esPiso = [&](int hab, int fila, int col)
-        {
-            if (fila < 0 || fila >= 15 || col < 0 || col >= 20) return false;
-            return mapas[hab][fila][col] == 0;
-        };
-
-        int filaActual = static_cast<int>(posicion.y) / 40;
-        int colActual = static_cast<int>(posicion.x) / 40;
+        sf::Vector2f nuevaPosicion = posicion;
 
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W))
         {
-            sf::Vector2f siguientePos = posicion + sf::Vector2f{0, -velocidad};
-            int filaS = static_cast<int>(siguientePos.y) / 40;
-            int colS = static_cast<int>(siguientePos.x) / 40;
-            if (esPiso(habitacionActual, filaS, colS))
-            {
-                jugador.move({0, -velocidad});
-            }
+            nuevaPosicion.y -= velocidad;
         }
 
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S))
         {
-            sf::Vector2f siguientePos = posicion + sf::Vector2f{0, velocidad};
-            int filaS = static_cast<int>(siguientePos.y) / 40;
-            int colS = static_cast<int>(siguientePos.x) / 40;
-            if (esPiso(habitacionActual, filaS, colS))
-            {
-                jugador.move({0, velocidad});
-            }
+            nuevaPosicion.y += velocidad;
         }
 
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A))
         {
-            sf::Vector2f siguientePos = posicion + sf::Vector2f{-velocidad, 0};
-            int filaS = static_cast<int>(siguientePos.y) / 40;
-            int colS = static_cast<int>(siguientePos.x) / 40;
-
-            if (colS >= 0)
-            {
-                if (esPiso(habitacionActual, filaS, colS))
-                    jugador.move({-velocidad, 0});
-            }
-            else
-            {
-                // attempt to move to left room
-                int siguienteHab = (habitacionActual + 5) % 6;
-                if (esPiso(siguienteHab, filaS, 19))
-                {
-                    habitacionActual = siguienteHab;
-                    jugador.setPosition({19 * 40.f, static_cast<float>(filaS * 40)});
-                }
-            }
+            nuevaPosicion.x -= velocidad;
         }
 
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D))
         {
-            sf::Vector2f siguientePos = posicion + sf::Vector2f{velocidad, 0};
-            int filaS = static_cast<int>(siguientePos.y) / 40;
-            int colS = static_cast<int>(siguientePos.x) / 40;
-
-            if (colS < 20)
-            {
-                if (esPiso(habitacionActual, filaS, colS))
-                    jugador.move({velocidad, 0});
-            }
-            else
-            {
-                // attempt to move to right room
-                int siguienteHab = (habitacionActual + 1) % 6;
-                if (esPiso(siguienteHab, filaS, 0))
-                {
-                    habitacionActual = siguienteHab;
-                    jugador.setPosition({0.f, static_cast<float>(filaS * 40)});
-                }
-            }
+            nuevaPosicion.x += velocidad;
         }
+
+        if (puedeMoverse(mapas, habitacionActual, nuevaPosicion))
+        {
+            jugador.setPosition(nuevaPosicion);
+        }
+
+        revisarCambioHabitacion(jugador, habitacionActual);
 
         window.clear();
 
-        for (int fila = 0; fila < 15; fila++)
+        for (int fila = 0; fila < FILAS; fila++)
         {
-            for (int columna = 0; columna < 20; columna++)
+            for (int columna = 0; columna < COLUMNAS; columna++)
             {
                 if (mapas[habitacionActual][fila][columna] == 1)
                 {
-                    pared.setPosition({columna * 40.f, fila * 40.f});
+                    pared.setPosition(sf::Vector2f(columna * 40.f, fila * 40.f));
                     window.draw(pared);
+                }
+                else if (mapas[habitacionActual][fila][columna] == 2)
+                {
+                    salida.setPosition(sf::Vector2f(columna * 40.f, fila * 40.f));
+                    window.draw(salida);
                 }
             }
         }
