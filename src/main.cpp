@@ -11,6 +11,25 @@ int main()
     sf::RectangleShape pared({40, 40});
     pared.setFillColor(sf::Color::Blue);
 
+    static const int mapa[15][20] =
+    {
+        {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+        {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
+    };
+
     while (window.isOpen())
     {
         while (const std::optional<sf::Event> event = window.pollEvent())
@@ -58,22 +77,16 @@ int main()
 
         window.clear();
 
-        for (int i = 0; i < 20; i++)
+        for (int fila = 0; fila < 15; fila++)
         {
-            pared.setPosition({i * 40.f, 0.f});
-            window.draw(pared);
-
-            pared.setPosition({i * 40.f, 560.f});
-            window.draw(pared);
-        }
-
-        for (int i = 0; i < 15; i++)
-        {
-            pared.setPosition({0.f, i * 40.f});
-            window.draw(pared);
-
-            pared.setPosition({760.f, i * 40.f});
-            window.draw(pared);
+            for (int columna = 0; columna < 20; columna++)
+            {
+                if (mapa[fila][columna] == 1)
+                {
+                    pared.setPosition({columna * 40.f, fila * 40.f});
+                    window.draw(pared);
+                }
+            }
         }
 
         window.draw(jugador);
