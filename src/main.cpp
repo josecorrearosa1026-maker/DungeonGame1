@@ -43,9 +43,17 @@ int main()
         float velocidad = 0.2f;
         sf::Vector2f posicion = jugador.getPosition();
 
+        auto puedeMoverse = [&](const sf::Vector2f &destino)
+        {
+            int fila = static_cast<int>(destino.y) / 40;
+            int columna = static_cast<int>(destino.x) / 40;
+            return fila >= 0 && fila < 15 && columna >= 0 && columna < 20 && mapa[fila][columna] == 0;
+        };
+
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W))
         {
-            if (posicion.y > 40)
+            sf::Vector2f siguientePos = posicion + sf::Vector2f{0, -velocidad};
+            if (posicion.y > 40 && puedeMoverse(siguientePos))
             {
                 jugador.move({0, -velocidad});
             }
@@ -53,7 +61,8 @@ int main()
 
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S))
         {
-            if (posicion.y < 520)
+            sf::Vector2f siguientePos = posicion + sf::Vector2f{0, velocidad};
+            if (posicion.y < 520 && puedeMoverse(siguientePos))
             {
                 jugador.move({0, velocidad});
             }
@@ -61,7 +70,8 @@ int main()
 
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A))
         {
-            if (posicion.x > 40)
+            sf::Vector2f siguientePos = posicion + sf::Vector2f{-velocidad, 0};
+            if (posicion.x > 40 && puedeMoverse(siguientePos))
             {
                 jugador.move({-velocidad, 0});
             }
@@ -69,7 +79,8 @@ int main()
 
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D))
         {
-            if (posicion.x < 720)
+            sf::Vector2f siguientePos = posicion + sf::Vector2f{velocidad, 0};
+            if (posicion.x < 720 && puedeMoverse(siguientePos))
             {
                 jugador.move({velocidad, 0});
             }
